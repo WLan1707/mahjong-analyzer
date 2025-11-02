@@ -1,23 +1,113 @@
-dist
-dist-*
-cabal-dev
-*.o
+# ========================
+# VS Code configuration
+# ========================
+.vscode/
+
+# ========================
+# Haskell / Cabal / Stack
+# ========================
+dist/
+dist-newstyle/
+.stack-work/
+.cabal-sandbox/
+cabal.sandbox.config
 *.hi
-*.hie
+*.o
 *.chi
 *.chs.h
 *.dyn_o
 *.dyn_hi
-.hpc
-.hsenv
-.cabal-sandbox/
-cabal.sandbox.config
 *.prof
 *.aux
 *.hp
 *.eventlog
-.stack-work/
-cabal.project.local
-cabal.project.local~
-.HTF/
+*.tix
+
+# GHC environment files
 .ghc.environment.*
+
+# Haskell Language Server / HLS cache
+.hie/
+.hie-bios/
+.hls/
+.cache/
+.hie.yaml
+
+# Local build artifacts (optional)
+build/
+tmp/
+out/
+logs/
+
+# ========================
+# LaTeX
+# ========================
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fls
+*.fdb_latexmk
+*.log
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdv
+*.run.xml
+*.bcf
+*.ilg
+*.ind
+*.idx
+*.lof
+*.lot
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.xdy
+*.lol
+*.synctex(busy)
+# *.pdf        # hasil kompilasi PDF
+*.dvi
+*.ps
+*.thm
+*.cut
+*.loa
+*.lol
+*.out.ps
+
+# latexmk / arara build logs
+latexmkrc
+*.blg
+*.blx.bib
+
+# Overleaf sync / temporary folders
+_texbuild/
+_output/
+out/
+build/
+__latexindent_temp.tex
+
+# ========================
+# OS / Editor junk files
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# ========================
+# Miscellaneous
+# ========================
+*.bak
+*.tmp
+*.log
+*.lock
