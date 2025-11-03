@@ -1,0 +1,188 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{listings}
+\usepackage{todonotes}
+
+\setuptodonotes{inline}
+\todostyle{done}{color=green!40}
+\todostyle{almostdone}{color=Goldenrod!70}
+
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,      % aktifkan warna
+  linkcolor=blue!70!black,       % warna untuk link internal (misal ke section)
+  citecolor=red,        % warna untuk citation
+  urlcolor=blue!70!black,        % warna untuk hyperlink / URL
+}
+
+\title{Mahjong Analyzer}
+\subtitle{Progress 2}
+\date{\today}
+\author{Muhammad Jilan Wicaksono}
+\institute{Universitas Indonesia}
+
+\lstset{
+  language=Haskell,            % Bahasa default
+  basicstyle=\ttfamily\footnotesize,  % Font dan ukuran
+  keywordstyle=\color{blue!70!black},       
+  commentstyle=\color{gray!70!black},       
+  stringstyle=\color{orange!70!black},      
+  numbers=left,                % Tampilkan nomor baris di kiri
+  numberstyle=\tiny\color{gray}, % Style nomor baris
+  breaklines=true,             % Otomatis pindah baris jika terlalu panjang
+  frame=single,                % Beri bingkai
+}
+
+\begin{document}
+\maketitle
+
+% \section{Target dan Pencapaian}
+\begin{frame}{Target dan Pencapaian}
+    \begin{enumerate}
+        \item \todo[done]{\textbf{Menyusun tipe data:} \hfill 100\%}
+        untuk Suit, Tile, Hand, Meld, dan Agari.
+        \item \todo[done]{\textbf{Membuat fungsi utilitas:} \hfill 100\%}
+        untuk mencari Pair dan Triplet, serta membuat parser sederhana.
+        \item \todo[almostdone]{\textbf{Membuat fungsi validasi kemenangan:} \hfill 75\%}
+        baik standar maupun non-standar. 
+        
+        Target bertipe \lstinline|agariCheck :: Hand -> Maybe Partition|
+
+        tetapi masih bertipe \lstinline|agariCheck :: Hand -> Bool|
+    \end{enumerate}
+\end{frame}
+
+% \section{Link Commit}
+\begin{frame}{Link Commit}
+    \begin{itemize}
+        \item Untuk \href{https://github.com/WLan1707/mahjong-analyzer/commit/543d4e09ed201b961832f01c22b7852d8a0c3fa0}{agariCheck}: Membuat fungsi validasi tangan sederhana.
+        \item Untuk \href{https://github.com/WLan1707/mahjong-analyzer/commit/df2459565765f7a16bf2800e2b3bbc6123f348bf}{fungsi utilitas}: Membuat ADT untuk entitas permainan serta menambahkan parser sederhana.
+    \end{itemize}
+\end{frame}
+
+% \section{Lesson Learned}
+\begin{frame}{Lesson Learned}
+    \begin{enumerate}
+        \item ADT untuk \lstinline|Tile, Pair, Meld| agar type-safe.
+        \item Higher-Order Function untuk fungsi \lstinline|removeTiles| menggunakan \lstinline|removeOneTile|.
+        \item Recursion dalam pemanggilan \lstinline|agariCheck|.
+        \item \lstinline|Either Monad| pada parser untuk error handling.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile, allowframebreaks]{Lesson Learned: ADT}
+    \begin{lstlisting}
+data Suit = Manzu | Pinzu | Souzu | Honor
+    deriving (Show, Eq, Ord, Enum, Bounded)
+
+data Tile = Tile Suit Int
+    deriving (Show, Eq)
+
+instance Ord Tile where
+    compare :: Tile -> Tile -> Ordering
+    compare (Tile s1 n1) (Tile s2 n2)
+        | s1 == s2   = compare n1 n2
+        | otherwise  = compare s1 s2
+    \end{lstlisting}
+    \framebreak
+    \begin{lstlisting}
+data Meld 
+    = Sequence Tile         -- Sequence M4 : M4, M5, M6
+    | Triplet Tile          -- Triplet Z3 : Z3, Z3, Z3
+    deriving (Show)
+
+data PMeld 
+    = MissingMiddle Tile    -- MissingMiddle P4 : ada P4 dan P6
+    | MissingOut Tile       -- MissingOut S2 : ada S2 dan S3
+    deriving (Show)
+
+newtype Pair = Pair Tile  -- Pair P3 : P3, P3
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[allowframebreaks, fragile]{Lesson Learned: Higher-Order Function}
+    \begin{lstlisting}
+removeOneTile :: Tile -> HandCount -> HandCount
+removeOneTile =
+    let updateFunc c = if c > 1 then Just (c - 1) else Nothing
+        in Map.update updateFunc 
+
+removePair :: Pair -> HandCount -> HandCount
+removePair (Pair tile) hc =
+    let tilesToRemove = replicate 2 tile
+        in foldl' (flip removeOneTile) hc tilesToRemove
+    \end{lstlisting}
+    \framebreak
+    \begin{lstlisting}
+removeSequence :: Meld -> HandCount -> HandCount
+removeSequence (Sequence (Tile suit num)) handCount = 
+    let tilesToAdjust = [Tile suit num, Tile suit (num + 1), Tile suit (num + 2)]
+
+    in foldl' (flip removeOneTile) handCount tilesToAdjust
+
+removeTriplet :: Meld -> HandCount -> HandCount
+removeTriplet (Triplet tile) handCount = 
+    let tilesToAdjust = replicate 3 tile
+
+    in foldl' (flip removeOneTile) handCount tilesToAdjust 
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile, allowframebreaks]{Lesson Learned: Recursion}
+    \begin{lstlisting}
+checkMeld :: HandCount -> Int -> Bool
+checkMeld hc meldToFind
+  | meldToFind == 0 = Map.null hc
+  | otherwise =
+    case Map.minViewWithKey hc of
+      Nothing -> False
+
+      Just ((firstTile, count), _) ->
+                
+        let tryTriplet = 
+          (count >= 3) && 
+          let m = Triplet firstTile
+            hc' = removeTriplet m hc 
+              in checkMeld hc' (meldToFind - 1)
+
+          trySequence = 
+            isSequence firstTile hc &&
+            let m = Sequence firstTile
+              hc' = removeSequence m hc
+            in checkMeld hc' (meldToFind - 1)
+
+        in tryTriplet || trySequence
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile, allowframebreaks]{Lesson Learned: Monad}
+    \begin{lstlisting}
+parseHand :: String -> Either String Hand
+parseHand "" = Right []  -- Base case: tangan kosong
+parseHand str =
+  -- Pisahkan grup angka di depan
+  -- span isDigit "123m456p" -> ("123", "m456p")
+  let (nums, rest) = span isDigit str
+  in
+    if null nums then
+      Left "Input tidak valid: Diharapkan ada angka."
+    else if null rest then
+      Left "Input tidak valid: Diharapkan ada suit (m,p,s,z) setelah angka."
+    else
+      let suitChar = head rest
+        remainingString = tail rest
+      in
+        case charToSuit suitChar of
+          Left err   -> Left err
+          Right suit ->
+            -- Buat tiles untuk bagian ini
+            let currentTiles = stringToTiles nums suit
+            -- Panggil rekursi untuk sisa string
+            in (currentTiles ++) <$> parseHand remainingString
+    \end{lstlisting}
+    
+\end{frame}
+\end{document}

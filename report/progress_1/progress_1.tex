@@ -1,0 +1,191 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\title{Mahjong Analyzer}
+\subtitle{Mini Projek}
+\date{\today}
+\author{Muhammad Jilan Wicaksono}
+\institute{Universitas Indonesia}
+
+\lstset{
+  language=Haskell,            % Bahasa default
+  basicstyle=\ttfamily\small,  % Font dan ukuran
+  keywordstyle=\color{blue},   % Warna untuk keyword (misal: "let", "in")
+  commentstyle=\color{green!60!black}, % Warna untuk komentar
+  stringstyle=\color{red},     % Warna untuk string
+  numbers=left,                % Tampilkan nomor baris di kiri
+  numberstyle=\tiny\color{gray}, % Style nomor baris
+  breaklines=true,             % Otomatis pindah baris jika terlalu panjang
+  frame=single,                % Beri bingkai
+}
+\begin{document}
+  \maketitle
+  \section{Apa itu Mahjong?}
+  \begin{frame}
+    % {Apa itu Mahjong?}
+    \begin{itemize}
+        \item Permainan papan yang menggunakan \((3\times 9 + 7) \times 4\) tile.
+    \end{itemize}
+    \begin{center}
+        \includegraphics[width=.9\linewidth]{image/mahjongTile.jpg}
+    \end{center}
+  \end{frame}
+
+  \begin{frame}
+    \begin{itemize}
+        \item Dimainkan oleh \(4 \) atau \(3 \) pemain.
+        \item Awalnya, setiap pemain mendapatkan \textit{hand} berisi \(13\) tile.
+        \item Tiap giliran, satu pemain mengambil satu tile dari dek (disebut dinding atau \textit{wall}) untuk mendapatkan bentuk tertentu.
+    \end{itemize}
+    \begin{center}
+        \includegraphics[width=.7\linewidth]{image/mahjongInterface.jpg}
+    \end{center}
+  \end{frame}
+
+  \begin{frame}
+    \begin{center}
+        \includegraphics[width = .9\linewidth]{image/mahjongMeldType.jpg}
+    \end{center}
+    \begin{itemize}
+        \item Satu hand terdiri dari \(13\) tile.
+        \item Ada dua jenis kumpulan tile:
+        \begin{itemize}
+            \item Pair: \(2 \) tile yang sama.
+            \item Meld: \(3 \) tile yang bisa berbentuk Sequence ataupun Triplet.
+        \end{itemize}
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}
+    \begin{center}
+        \includegraphics[width = \linewidth]{image/mahjongWinningHand.jpg}
+    \end{center}
+    \begin{itemize}
+        \item Winning hand (\textit{Agari}): hand dengan \(14\) ubin (\(13 + 1\) setelah draw sebelum discard) yang memenuhi pola tertentu.
+        \item Biasanya harus berupa \(4\) meld disertai dengan \(1\) pair.
+        \item Jika suatu pemain mencapai agari, pemain itu dapat menghentikan ronde tersebut, mendapatkan skor sesuai dengan hand terakhirnya, lalu ronde baru dimulai.
+    \end{itemize}
+  \end{frame}
+
+  \section{Permasalahan}
+
+  \begin{frame}
+    Mudah dilihat bahwa contoh tadi memuat \(4\) meld dan \(1\) pair.
+    \begin{center}
+        \includegraphics[width = \linewidth]{image/mahjongWinningHand.jpg}
+    \end{center}
+    Namun, terkadang ada hand yang sulit untuk dilihat, seperti
+    \begin{center}
+        \includegraphics[width = \linewidth]{image/mahjongComplexHand.jpg}
+    \end{center}
+    Akan dibuat suatu fungsi untuk memeriksa apakah suatu hand adalah agari.
+  \end{frame}
+
+  \begin{frame}
+    Satu hal lain yang menarik untuk dihitung adalah seberapa jauh suatu hand dari agari. Hal ini disebut sebagai shanten number.
+
+    contoh \(1 \) shanten
+    \begin{center}
+        \includegraphics[width = \linewidth]{image/mahjongShanten1.jpg}
+    \end{center}
+
+    contoh lain
+    \begin{center}
+        \includegraphics[width = \linewidth]{image/mahjongShanten2.jpg}
+    \end{center}
+  \end{frame}
+
+  \begin{frame}
+    Yang terakhir adalah menghitung skor yang diterima dari agari
+    
+    \begin{center}
+        \includegraphics[width = \linewidth]{image/mahjongScore.jpg}
+    \end{center}
+  \end{frame}
+
+  \begin{frame}[fragile]{Tujuan Mini Projek}
+    \begin{itemize}
+        \item Membuat fungsi untuk mengecek tangan kemenangan, bertipe seperti
+\begin{lstlisting}[language = Haskell]
+    agariCheck :: Hand -> Bool
+\end{lstlisting}
+        \item Membuat fungsi untuk menghitung shanten number, atau seberapa jauh hand dari agari, bertipe seperti
+\begin{lstlisting}
+    shantenCalculator :: Hand -> Int
+\end{lstlisting}
+        \item Membuat fungsi untuk menghitung skor yang diperoleh dari agari, bertipe seperti
+\begin{lstlisting}
+    scoreCalculator :: Hand -> Maybe Int
+\end{lstlisting}
+    \end{itemize}
+  \end{frame}
+
+  \section{Target Progres}
+  
+  \begin{frame}[allowframebreaks]{Target Progres per Pekan}
+    \begin{itemize}
+      \item Target Pekan 1: 
+      \begin{itemize}
+        \item Menyusun tipe data untuk Suit, Tile, Hand, Meld, dan Agari.
+        \item Membuat fungsi untuk mencari pair dan meld dari suatu hand.
+      \end{itemize}
+      \item Target Pekan 2:
+      \begin{itemize}
+        \item Membuat fungsi validasi tangan kemenangan untuk hand standar, yaitu \(4 \) meld dan \(1 \) pair.
+        \item Membuat fungsi validasi tangan kemenangan untuk hand tidak standar, yaitu Chii Toitsu (7 pair) dan Kokushi Musou (\(13 + 1\) tile honor dan terminal).
+        
+        Fungsi bertipe seperti \lstinline|agariCheck :: Hand -> Maybe Partition|
+        dengan \lstinline|Just Partition| menandakan hand yang valid beserta partisinya, dan \lstinline|Nothing| jika hand tidak valid.
+      \end{itemize}
+      \framebreak
+      \item Target Pekan 3:
+      \begin{itemize}
+        \item Mengidentifikasi semua kandidat set dalam suatu hand: Meld, pair, dan meld yang tidak lengkap.
+        \item Mengimplementasi fungsi untuk menghitung nilai shanten, seperti \lstinline|calculateShanten :: Hand -> Int|.
+        \item Mengadaptasi algoritma untuk menangani hand yang tidak standar.
+      \end{itemize}
+      \framebreak
+
+      \item Target Pekan 4:
+      \begin{itemize}
+        \item Mendefinisikan tipe data untuk merepresentasikan semua Yaku yang mungkin.
+        \item Mengimplementasikan fungsi untuk mengecek yaku dari tangan, bertipe seperti \lstinline|isTanyao :: Hand -> Bool|.
+        \item Membuat fungsi yang menerima sebuah hand dan mengembalikan daftar semua Yaku yang terpenuhi.
+        \item Membuat fungsi untuk menghitung \textit{Fu} (poin minor) dari bentuk hand.
+        \item membuat fungsi untuk menghitung skor yang didapat berdasarkan Yaku (Han) dan Fu dari tangan.
+      \end{itemize}
+      \framebreak
+      \item Target Pekan 5:
+      \begin{itemize}
+        \item Melakukan testing terhadap fungsi yang telah dibuat.
+        \item Mulai membangun Command-Line Interface sederhana.
+      \end{itemize}
+      \item Target Pekan 6:
+      \begin{itemize}
+        \item Melanjutkan testing dan CLI, serta finalisasi.
+        \item Membuat dokumentasi.
+      \end{itemize}
+    \end{itemize}
+  \end{frame}
+
+  \section{Aspek Fungsional}
+
+  \begin{frame}{Aspek Fungsional}
+    \begin{itemize}
+      \item \textbf{Immutability \& Pure Function}
+      
+      Fungsi seperti \lstinline|calculateShanten| selalu memberikan hasil yang sama untuk input yang sama.
+      \item \textbf{Typeclass, ADT, \& Pattern Matching}
+      
+      Untuk memodelkan semua entitas dan aturan permainan secara type-safe.
+      \item \textbf{Monad}
+      
+      Mencakup \lstinline|State Monad| untuk mengelola state internal, \lstinline|Reader Monad| yang menyediakan konteks permainan, dan \lstinline|IO Monad|.
+      \item \textbf{Higher-Order Function}
+      
+      Seperti \lstinline|map|, \lstinline|filter|, \lstinline|foldl| yang digunakan untuk memproses \lstinline|Hand|.
+    \end{itemize}
+  \end{frame}
+\end{document}
