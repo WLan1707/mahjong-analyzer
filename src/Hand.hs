@@ -5,6 +5,7 @@ module Hand where
 import qualified Data.Map.Strict as Map
 import qualified Data.Functor.Product as Map
 import Data.Char ( digitToInt, isDigit )
+import Text.ParserCombinators.ReadP (char)
 
 -- Membuat ADT untuk jenis tile
 data Suit = Manzu | Pinzu | Souzu | Honor
@@ -25,8 +26,9 @@ data Meld
     deriving (Show)
 
 data PMeld 
-    = MissingMiddle Tile    -- MissingMiddle P4 artinya ada P4 dan P6
-    | MissingOut Tile       -- MissingOut S2 artinya ada S2 dan S3
+    = MissMid Tile    -- MissingMiddle P4 artinya ada P4 dan P6
+    | MissOut Tile       -- MissingOut S2 artinya ada S2 dan S3
+    deriving (Show)
 
 newtype Pair = Pair Tile  -- Pair P3 artinya P3, P3
 
@@ -49,15 +51,56 @@ findPair = map Pair . Map.keys . Map.filter (>= 2)
 findTriplet :: HandCount -> [Meld]
 findTriplet = map Triplet . Map.keys . Map.filter (>= 3)
 
+isPair :: Tile -> HandCount -> Bool
+isPair tile handCount = Map.findWithDefault 0 tile handCount > 1
+
+isTriplet :: Tile -> HandCount -> Bool
+isTriplet tile handCount = Map.findWithDefault 0 tile handCount > 2
+
+isSequence :: Tile -> HandCount -> Bool
+isSequence (Tile suit num) handCount =
+    suit /= Honor &&
+    Map.findWithDefault 0 (Tile suit num) handCount > 0 &&
+    Map.findWithDefault 0 (Tile suit (num + 1)) handCount > 0 &&
+    Map.findWithDefault 0 (Tile suit (num + 2)) handCount > 0
+
+isMissOut :: Tile -> HandCount -> Bool
+isMissOut (Tile suit num) hand =
+    suit /= Honor &&
+    Map.findWithDefault 0 (Tile suit num) hand > 0 &&
+    Map.findWithDefault 0 (Tile suit (num + 1)) hand > 0
+
+isMissMid :: Tile -> HandCount -> Bool
+isMissMid (Tile suit num) handCount =
+    suit /= Honor &&
+    Map.findWithDefault 0 (Tile suit num) handCount > 0 &&
+    Map.findWithDefault 0 (Tile suit (num + 2)) handCount > 0
+
+findSequence :: HandCount -> [Meld]
+findSequence handCount = [Sequence tile | tile <- Map.keys handCount, isSequence tile handCount]
+
+findMissOut :: HandCount -> [PMeld]
+findMissOut hand = [MissOut tile | tile <- Map.keys hand, isMissOut tile hand]
+
+findMissMid :: HandCount -> [PMeld]
+findMissMid hand = [MissMid tile | tile <- Map.keys hand, isMissMid tile hand]
+
 -- Parsing dari String menjadi Hand
 
 -- Fungsi pembantu untuk mengubah Char menjadi Suit
 charToSuit :: Char -> Either String Suit
-charToSuit 'm' = Right Manzu
-charToSuit 'p' = Right Pinzu
-charToSuit 's' = Right Souzu
-charToSuit 'z' = Right Honor  -- 'z' untuk jīpai (honor)
-charToSuit c   = Left ("Karakter suit tidak valid: " ++ [c])
+-- charToSuit 'm' = Right Manzu
+-- charToSuit 'p' = Right Pinzu
+-- charToSuit 's' = Right Souzu
+-- charToSuit 'z' = Right Honor  -- 'z' untuk jīpai (honor)
+-- charToSuit c   = Left ("Karakter suit tidak valid: " ++ [c])
+
+charToSuit char
+    | char == 'm' = Right Manzu
+    | char == 'p' = Right Pinzu
+    | char == 's' = Right Souzu
+    | char == 'z' = Right Honor
+    | otherwise = Left ("Karakter suit tidak valid: " ++ [char])
 
 -- Fungsi pembantu untuk mengubah String angka menjadi [Tile]
 -- "123" -> Manzu -> [Tile Manzu 1, Tile Manzu 2, Tile Manzu 3]

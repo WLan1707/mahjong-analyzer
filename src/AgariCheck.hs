@@ -4,12 +4,12 @@ import Hand
 import qualified Data.Map.Strict as Map
 import Data.List (foldl')
 
-isSequence :: Tile -> HandCount -> Bool
-isSequence (Tile suit num) handCount =
-    suit /= Honor &&
-    Map.findWithDefault 0 (Tile suit num) handCount > 0 &&
-    Map.findWithDefault 0 (Tile suit (num + 1)) handCount > 0 &&
-    Map.findWithDefault 0 (Tile suit (num + 2)) handCount > 0
+-- isSequence :: Tile -> HandCount -> Bool
+-- isSequence (Tile suit num) handCount =
+--     suit /= Honor &&
+--     Map.findWithDefault 0 (Tile suit num) handCount > 0 &&
+--     Map.findWithDefault 0 (Tile suit (num + 1)) handCount > 0 &&
+--     Map.findWithDefault 0 (Tile suit (num + 2)) handCount > 0
 
 removeTile :: HandCount -> Tile -> HandCount
 removeTile handCount tile = Map.adjust (\c -> c - 1) tile handCount
@@ -26,10 +26,7 @@ removePair (Pair tile) hc =
 
 removeSequence :: Meld -> HandCount -> HandCount
 removeSequence (Sequence (Tile suit num)) handCount = 
-    let t1 = Tile suit num
-        t2 = Tile suit (num + 1)
-        t3 = Tile suit (num + 2)
-        tilesToAdjust = [t1, t2, t3]
+    let tilesToAdjust = [Tile suit num, Tile suit (num + 1), Tile suit (num + 2)]
 
     in foldl' (flip removeOneTile) handCount tilesToAdjust
 
@@ -38,6 +35,18 @@ removeTriplet (Triplet tile) handCount =
     let tilesToAdjust = replicate 3 tile
 
     in foldl' (flip removeOneTile) handCount tilesToAdjust 
+
+removeMissMid :: PMeld -> HandCount -> HandCount
+removeMissMid (MissMid (Tile suit num)) hand =
+    let tilesToAdjust = [Tile suit num, Tile suit (num + 2)]
+
+    in foldl' (flip removeOneTile) hand tilesToAdjust
+
+removeMissOut :: PMeld -> HandCount -> HandCount
+removeMissOut (MissOut (Tile suit num)) hand =
+    let tilesToAdjust = [Tile suit num, Tile suit (num + 1)]
+
+    in foldl' (flip removeOneTile) hand tilesToAdjust
 
 checkMeld :: HandCount -> Int -> Bool
 checkMeld hc meldToFind
@@ -75,8 +84,8 @@ isKokushi hc =
         hasPair = any (\t -> Map.findWithDefault 0 t hc >= 2) allOrphans
     in hasAll && hasPair
 
-agariCheck :: HandCount -> Bool
-agariCheck hc 
+isAgari :: HandCount -> Bool
+isAgari hc 
     | isChiitoi hc = True
     | isKokushi hc = True
     | otherwise =
@@ -99,5 +108,5 @@ agariTest = [agariCheckFromString hand | hand <- [hand1,hand2,hand3,hand4,hand5]
     agariCheckFromString :: String -> Either String Bool
     agariCheckFromString s = do
         hand <- parseHand s
-        let result = agariCheck $ handToCount  hand
+        let result = isAgari $ handToCount  hand
         return result
