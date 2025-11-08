@@ -12,5 +12,6 @@ library
   build-depends:
       base >=4.14 && <5,
       containers,
-      extra
+      extra,
+      MemoTrie
   default-language: Haskell2010
