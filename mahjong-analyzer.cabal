@@ -8,7 +8,8 @@ library
   exposed-modules: 
       Hand,
       AgariCheck,
-      ShantenCalculate
+      ShantenCalculate,
+      ScoreCalculator
   build-depends:
       base >=4.14 && <5,
       containers,

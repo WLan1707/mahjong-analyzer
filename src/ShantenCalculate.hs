@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module ShantenCalculate where
 
@@ -77,11 +78,13 @@ shantenInt f handInt suit result
       missMidResult = [ f (extractSuit suit $ removeMissMid (MissMid smallestTile) hand) suit (addResult result (0,0,1)) | isMissMid smallestTile hand ]
       missOutResult = [ f (extractSuit suit $ removeMissOut (MissOut smallestTile) hand) suit (addResult result (0,0,1)) | isMissOut smallestTile hand ]
       fallbackResult = [ f (extractSuit suit $ removeOneTile smallestTile hand) suit result ]
+      
       allResult = pairResult ++ tripletResult ++ sequenceResult ++ missMidResult ++ missOutResult ++ fallbackResult
     in maximumBy (comparing compResult) allResult
 
 data Tree a = Tree (Tree a) a (Tree a)
 instance Functor Tree where
+    fmap :: (a -> b) -> Tree a -> Tree b
     fmap f (Tree l m r) = Tree (fmap f l) (f m) (fmap f r)
 
 index :: Tree a -> Int -> a
@@ -102,7 +105,6 @@ nats = go 0 1
 toList :: Tree a -> [a]
 toList as = map (index as) [0..]
 
--- The memoizing functionality depends on this being in eta reduced form!
 memoTree :: ((Int -> a) -> Int -> a) -> Int -> a
 memoTree f = memoTree_f
   where memoTree_f = index memo

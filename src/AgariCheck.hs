@@ -97,6 +97,47 @@ isAgari hc
 
             in any tryPair possiblePair
 
+meldPartition :: HandCount -> [[KMeld]]
+meldPartition hc =
+    case Map.minViewWithKey hc of
+        Nothing -> [[]]
+
+        Just ((firstTile, _), _) ->
+            
+            let tryTriplet = 
+                    if isTriplet firstTile hc then
+                        let m = Triplet firstTile
+                            hc' = removeTriplet m hc
+                        in map (\xs -> xs ++ [KMeld m False]) $ meldPartition hc'
+                    else
+                        []
+
+                trySequence = 
+                    if isSequence firstTile hc then
+                        let m = Sequence firstTile
+                            hc' = removeSequence m hc
+                        in map (++ [KMeld m False]) $ meldPartition hc'
+                    else
+                        []
+
+            in tryTriplet ++ trySequence
+
+findPartition :: HandCount -> [KMeld] -> [AgariHand]
+findPartition hc meld
+    | isChiitoi hc = [Chiitoi $ findPair hc]
+    | isKokushi hc = [Kokushi $ countToHand hc]
+    | otherwise =
+        let possiblePair = findPair hc
+            
+            openMeld = meld
+            tryPair pair = 
+                let handAfterPair = removePair pair hc
+                    melds = map (openMeld ++) $ meldPartition handAfterPair
+                    validMelds = filter (\ms -> length ms == 4) melds
+                in map (`Standard` pair) validMelds
+
+            in concatMap tryPair possiblePair
+
 -- Tes sederhana untuk agariCheck
 hand1 = "55667789m56799s4m"
 hand2 = "223344789m22456s"

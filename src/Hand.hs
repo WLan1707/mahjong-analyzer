@@ -11,7 +11,10 @@ import Text.ParserCombinators.ReadP (char)
 data Suit = Manzu | Pinzu | Souzu | Honor
     deriving (Show, Eq, Ord, Enum, Bounded)
 
-data Tile = Tile Suit Int
+data Tile = Tile {
+    suitTile :: Suit
+    , numberTile :: Int
+}
     deriving (Show, Eq)
 
 instance Ord Tile where
@@ -21,29 +24,37 @@ instance Ord Tile where
         | otherwise  = compare s1 s2
 
 data Meld 
-    = Sequence Tile         -- Sequence M4 artinya M4, M5, M6
-    | Triplet Tile          -- Triplet Z3 artinya Z3, Z3, Z3
-    deriving (Show)
+    = Sequence {meldTile :: Tile}         -- Sequence M4 artinya M4, M5, M6
+    | Triplet {meldTile :: Tile}          -- Triplet Z3 artinya Z3, Z3, Z3
+    deriving (Show, Eq)
 
 data PMeld 
     = MissMid Tile    -- MissingMiddle P4 artinya ada P4 dan P6
     | MissOut Tile       -- MissingOut S2 artinya ada S2 dan S3
-    deriving (Show)
+    deriving (Show, Eq)
 
-newtype Pair = Pair Tile  -- Pair P3 artinya P3, P3
+newtype Pair = Pair {pairTile :: Tile}  -- Pair P3 artinya P3, P3
+
+data KMeld = KMeld {
+    baseMeld :: Meld
+    , isOpen :: Bool    -- apakah hasil call
+} deriving (Show, Eq)
 
 type Hand = [Tile]
 
 -- Tangan kemenangan
 data AgariHand 
-    = Standard [Meld] Pair  -- 4 Meld + 1 Pair 
+    = Standard [KMeld] Pair  -- 4 Meld + 1 Pair 
     | Chiitoi [Pair]        -- 7 Pair
     | Kokushi Hand          -- 13 + 1 Honor & Terminal
 
 type HandCount = Map.Map Tile Int
 
 handToCount :: Hand -> HandCount
-handToCount hand = Map.fromListWith (+) [(tile, 1) | tile <- hand]
+handToCount hand = Map.fromListWith (+) [ (tile, 1) | tile <- hand ]
+
+countToHand :: HandCount -> Hand
+countToHand hc = concat [ replicate n tile | (tile, n) <- Map.toList hc ]
 
 findPair :: HandCount -> [Pair]
 findPair = map Pair . Map.keys . Map.filter (>= 2)
