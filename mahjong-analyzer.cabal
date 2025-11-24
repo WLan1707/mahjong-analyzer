@@ -9,10 +9,39 @@ library
       Hand,
       AgariCheck,
       ShantenCalculate,
+      YakuCalculator,
+      FuCalculator,
       ScoreCalculator
   build-depends:
       base >=4.14 && <5,
       containers,
       extra,
       MemoTrie
+  default-language: Haskell2010
+
+-- executable mahjong-analyzer-exe
+--   hs-source-dirs: app
+--   main-is: Main.hs
+--   build-depends:
+--       base >= 4.12 && < 5
+--     , containers
+--     , mahjong-analyzer
+--   default-language: Haskell2010
+
+test-suite mahjong-test
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Spec.hs
+
+  other-modules:
+      Generators,
+      Properties
+
+  build-depends:
+      base >= 4.12 && < 5
+    , QuickCheck >= 2.14
+    , containers
+    , mahjong-analyzer 
+  ghc-options: -Wall
+
   default-language: Haskell2010

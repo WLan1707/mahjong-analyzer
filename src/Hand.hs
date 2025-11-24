@@ -6,6 +6,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Functor.Product as Map
 import Data.Char ( digitToInt, isDigit )
 import Text.ParserCombinators.ReadP (char)
+import Data.List
 
 -- Membuat ADT untuk jenis tile
 data Suit = Manzu | Pinzu | Souzu | Honor
@@ -15,7 +16,13 @@ data Tile = Tile {
     suitTile :: Suit
     , numberTile :: Int
 }
-    deriving (Show, Eq)
+    deriving (Eq)
+
+instance Show Tile where
+    show (Tile Manzu n) = show n ++ "M"
+    show (Tile Pinzu n) = show n ++ "P"
+    show (Tile Souzu n) = show n ++ "S"
+    show (Tile Honor n) = show n ++ "Z"
 
 instance Ord Tile where
     compare :: Tile -> Tile -> Ordering
@@ -26,7 +33,21 @@ instance Ord Tile where
 data Meld 
     = Sequence {meldTile :: Tile}         -- Sequence M4 artinya M4, M5, M6
     | Triplet {meldTile :: Tile}          -- Triplet Z3 artinya Z3, Z3, Z3
-    deriving (Show, Eq)
+    deriving (Eq)
+
+instance Ord Meld where
+    compare (Sequence t1) (Sequence t2) = compare t1 t2
+    compare (Triplet t1) (Triplet t2) = compare t1 t2
+    compare (Sequence t1) (Triplet t2)
+        | t1 == t2 = LT
+        | otherwise = compare t1 t2
+    compare (Triplet t1) (Sequence t2) 
+        | t1 == t2 = GT
+        | otherwise = compare t1 t2
+
+instance Show Meld where
+    show (Sequence (Tile s n)) = "(" ++ show (Tile s n) ++ "," ++ show (Tile s (n+1)) ++ "," ++ show (Tile s (n+2)) ++ ")"
+    show (Triplet t) = "(" ++ show t ++ "," ++ show t ++ "," ++ show t ++ ")"
 
 data PMeld 
     = MissMid Tile    -- MissingMiddle P4 artinya ada P4 dan P6
@@ -34,11 +55,19 @@ data PMeld
     deriving (Show, Eq)
 
 newtype Pair = Pair {pairTile :: Tile}  -- Pair P3 artinya P3, P3
+    deriving (Eq, Ord)
+
+instance Show Pair where
+    show (Pair p) = "("++ show p ++ "," ++ show p ++")"
 
 data KMeld = KMeld {
     baseMeld :: Meld
     , isOpen :: Bool    -- apakah hasil call
-} deriving (Show, Eq)
+} deriving (Eq, Ord)
+
+instance Show KMeld where
+    show (KMeld m False) = "Closed" ++ show m
+    show (KMeld m True) = "Open" ++ show m
 
 type Hand = [Tile]
 
@@ -47,8 +76,22 @@ data AgariHand
     = Standard [KMeld] Pair  -- 4 Meld + 1 Pair 
     | Chiitoi [Pair]        -- 7 Pair
     | Kokushi Hand          -- 13 + 1 Honor & Terminal
+    deriving (Eq, Show)
 
 type HandCount = Map.Map Tile Int
+
+data WinMethod = Ron | Tsumo 
+    deriving (Show, Eq)
+
+data HandContext = HandContext {
+    openMelds :: [KMeld]
+    , prevalentWind :: Int
+    , seatWind :: Int
+    , winTile :: Tile
+    , winMethod :: WinMethod
+    , isRiichi :: Bool
+    , isDealer :: Bool
+} deriving (Show)
 
 handToCount :: Hand -> HandCount
 handToCount hand = Map.fromListWith (+) [ (tile, 1) | tile <- hand ]
@@ -95,6 +138,13 @@ findMissOut hand = [MissOut tile | tile <- Map.keys hand, isMissOut tile hand]
 
 findMissMid :: HandCount -> [PMeld]
 findMissMid hand = [MissMid tile | tile <- Map.keys hand, isMissMid tile hand]
+
+normalizeAgari :: AgariHand -> AgariHand
+normalizeAgari (Standard melds pair) =
+    Standard (sort melds) pair
+normalizeAgari (Kokushi hand) = Kokushi (sort hand)
+normalizeAgari (Chiitoi pairs) = Chiitoi (sort pairs)
+
 
 -- Parsing dari String menjadi Hand
 

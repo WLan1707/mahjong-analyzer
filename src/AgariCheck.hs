@@ -2,7 +2,7 @@ module AgariCheck where
 
 import Hand
 import qualified Data.Map.Strict as Map
-import Data.List (foldl')
+import Data.List (foldl', sort)
 
 -- isSequence :: Tile -> HandCount -> Bool
 -- isSequence (Tile suit num) handCount =
@@ -124,15 +124,15 @@ meldPartition hc =
 
 findPartition :: HandCount -> [KMeld] -> [AgariHand]
 findPartition hc meld
-    | isChiitoi hc = [Chiitoi $ findPair hc]
-    | isKokushi hc = [Kokushi $ countToHand hc]
+    | isChiitoi hc = [normalizeAgari $ Chiitoi $ findPair hc]
+    | isKokushi hc = [normalizeAgari $ Kokushi $ countToHand hc]
     | otherwise =
         let possiblePair = findPair hc
             
             openMeld = meld
             tryPair pair = 
                 let handAfterPair = removePair pair hc
-                    melds = map (openMeld ++) $ meldPartition handAfterPair
+                    melds = map (sort .(openMeld ++)) $ meldPartition handAfterPair
                     validMelds = filter (\ms -> length ms == 4) melds
                 in map (`Standard` pair) validMelds
 
@@ -144,10 +144,18 @@ hand2 = "223344789m22456s"
 hand3 = "4488m115599s1155z"
 hand4 = "999m6677p3355678s"
 hand5 = "456m456p45566778s"
+kokushiHand = "99p91m1z1s2z1p54673z9s"
+hand6 = "234m111p789p345p99s"
 
-agariTest = [agariCheckFromString hand | hand <- [hand1,hand2,hand3,hand4,hand5]] where
+agariTest = [agariCheckFromString hand | hand <- [hand1,kokushiHand]] where
     agariCheckFromString :: String -> Either String Bool
     agariCheckFromString s = do
         hand <- parseHand s
         let result = isAgari $ handToCount  hand
+        return result
+
+partitionTest = [findPartitionFromString hand | hand <- [hand6]] where
+    findPartitionFromString s = do
+        hand <- parseHand s
+        let result = findPartition (handToCount hand) []
         return result
