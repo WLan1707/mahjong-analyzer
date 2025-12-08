@@ -10,6 +10,7 @@ import qualified Data.Map.Strict as Map
 import Data.List (maximumBy)
 import Data.Ord (comparing)
 import Data.MemoTrie 
+import Data.Maybe
 
 shantenValue :: Int -> Int -> Int -> Int
 shantenValue m p pm = 8 - 2*m - p - pm
@@ -38,49 +39,71 @@ decodeSuitMap suit num = Map.fromList [ (Tile suit n, c) | (n, c) <- zip [1..] (
 
 calculateShanten :: HandCount -> Int
 calculateShanten hand
-  | isAgari hand    = -1
-  | otherwise       = uncurry3 shantenValue result
-    where
-      result = foldl addResult (0,0,0) resultPerSuit
-      resultPerSuit = [resultMan, resultPin, resultSou, resultHon]
-      resultMan = shantenSuitTileFirst (decodeSuitMap Manzu $ extractSuit Manzu hand ) (0,0,0)
-      resultPin = shantenSuitTileFirst (decodeSuitMap Pinzu $ extractSuit Pinzu hand ) (0,0,0)
-      resultSou = shantenSuitTileFirst (decodeSuitMap Souzu $ extractSuit Souzu hand ) (0,0,0)
-      resultHon = shantenSuitTileFirst (decodeSuitMap Honor $ extractSuit Honor hand ) (0,0,0)
+  | isAgari hand = -1
+  | otherwise    = uncurry3 shantenValue result
+  where
+    result = foldl addResult (0,0,0) resultPerSuit
 
-shantenSuitTileFirst :: HandCount -> ResultSuit -> ResultSuit
+    resultPerSuit =
+      map perSuit [Manzu, Pinzu, Souzu, Honor]
+
+    perSuit s =
+      let sc = decodeSuitMap s (extractSuit s hand)
+      in shantenSuitTileFirst sc (0,0,0)
+
+
+shantenSuitTileFirst :: HandCount -> ResultSuit -> (Int, Int, Int)
 shantenSuitTileFirst hand result
-  | Map.null hand     = result
+  | Map.null hand = result
   | otherwise =
-    let
-      smallestTile = fst $ Map.findMin hand
-      
-      pairResult = [ shantenSuitTileFirst (removePair (Pair smallestTile) hand) (addResult result (0,1,0)) | isPair smallestTile hand ]
-      tripletResult = [ shantenSuitTileFirst (removeTriplet (Triplet smallestTile) hand) (addResult result (1,0,0)) | isTriplet smallestTile hand ]
-      sequenceResult = [ shantenSuitTileFirst (removeSequence (Sequence smallestTile) hand) (addResult result (1,0,0)) | isSequence smallestTile hand ]
-      missMidResult = [ shantenSuitTileFirst (removeMissMid (MissMid smallestTile) hand) (addResult result (0,0,1)) | isMissMid smallestTile hand ]
-      missOutResult = [ shantenSuitTileFirst (removeMissOut (MissOut smallestTile) hand) (addResult result (0,0,1)) | isMissOut smallestTile hand ]
-      fallbackResult = [ shantenSuitTileFirst (removeOneTile smallestTile hand) result ]
-      allResult = pairResult ++ tripletResult ++ sequenceResult ++ missMidResult ++ missOutResult ++ fallbackResult
-    in maximumBy (comparing compResult) allResult
+      let t = fst (Map.findMin hand)
 
-shantenInt :: (Int -> Suit -> ResultSuit -> ResultSuit) -> Int -> Suit -> ResultSuit -> ResultSuit
+          cases =
+            [ (isPair,     removePair    (Pair t),     (0,1,0))
+            , (isTriplet,  removeTriplet (Triplet t),  (1,0,0))
+            , (isSequence, removeSequence(Sequence t), (1,0,0))
+            , (isMissMid,  removeMissMid (MissMid t),  (0,0,1))
+            , (isMissOut,  removeMissOut (MissOut t),  (0,0,1)) ]
+
+          stepResults =
+            [ shantenSuitTileFirst (rm hand) (addResult result dl)
+            | (ok, rm, dl) <- cases
+            , ok t hand ]
+
+          fallback = shantenSuitTileFirst (removeOneTile t hand) result
+
+      in maximumBy (comparing compResult) (fallback : stepResults)
+
+shantenInt
+  :: (Int -> Suit -> ResultSuit -> ResultSuit)
+  -> Int -> Suit -> ResultSuit -> ResultSuit
 shantenInt f handInt suit result
-  | handInt == 0     = result
+  | handInt == 0 = result
   | otherwise =
-    let
-      hand = decodeSuitMap suit handInt
-      smallestTile = fst $ Map.findMin hand
-      
-      pairResult = [ f (extractSuit suit $ removePair (Pair smallestTile) hand) suit (addResult result (0,1,0)) | isPair smallestTile hand ]
-      tripletResult = [ f (extractSuit suit $ removeTriplet (Triplet smallestTile) hand) suit (addResult result (1,0,0)) | isTriplet smallestTile hand ]
-      sequenceResult = [ f (extractSuit suit $ removeSequence (Sequence smallestTile) hand) suit (addResult result (1,0,0)) | isSequence smallestTile hand ]
-      missMidResult = [ f (extractSuit suit $ removeMissMid (MissMid smallestTile) hand) suit (addResult result (0,0,1)) | isMissMid smallestTile hand ]
-      missOutResult = [ f (extractSuit suit $ removeMissOut (MissOut smallestTile) hand) suit (addResult result (0,0,1)) | isMissOut smallestTile hand ]
-      fallbackResult = [ f (extractSuit suit $ removeOneTile smallestTile hand) suit result ]
-      
-      allResult = pairResult ++ tripletResult ++ sequenceResult ++ missMidResult ++ missOutResult ++ fallbackResult
-    in maximumBy (comparing compResult) allResult
+      let
+        hand = decodeSuitMap suit handInt
+        t    = fst (Map.findMin hand)
+
+        -- daftar kasus: predicate, remover, delta
+        cases =
+          [ (isPair,     removePair    (Pair t),     (0,1,0))
+          , (isTriplet,  removeTriplet (Triplet t),  (1,0,0))
+          , (isSequence, removeSequence(Sequence t), (1,0,0))
+          , (isMissMid,  removeMissMid (MissMid t),  (0,0,1))
+          , (isMissOut,  removeMissOut (MissOut t),  (0,0,1))
+          ]
+
+        -- hasil setiap langkah yang memungkinkan
+        stepResults =
+          [ f ( extractSuit suit (rm hand) ) suit (addResult result dl)
+          | (ok, rm, dl) <- cases, ok t hand ]
+
+        -- fallback jika tile bukan bagian dari blok
+        fallback =
+          f ( extractSuit suit (removeOneTile t hand) ) suit result
+
+      in maximumBy (comparing compResult) (fallback : stepResults)
+
 
 data Tree a = Tree (Tree a) a (Tree a)
 instance Functor Tree where
@@ -119,11 +142,9 @@ memoShanten hand
   | otherwise       = uncurry3 shantenValue result
     where
       result = foldl addResult (0,0,0) resultPerSuit
-      resultPerSuit = [resultMan, resultPin, resultSou, resultHon]
-      resultMan = memoShantenSuit ( extractSuit Manzu hand ) Manzu (0,0,0)
-      resultPin = memoShantenSuit ( extractSuit Pinzu hand ) Pinzu (0,0,0)
-      resultSou = memoShantenSuit ( extractSuit Souzu hand ) Souzu (0,0,0)
-      resultHon = memoShantenSuit ( extractSuit Honor hand ) Honor (0,0,0)
+      resultPerSuit = map helper suits
+      suits = [Manzu, Pinzu, Souzu, Honor]
+      helper suit = memoShantenSuit ( extractSuit suit hand ) suit (0,0,0)
 
 -- test
 handString = "123m235p122334s12z"

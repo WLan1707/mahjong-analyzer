@@ -17,17 +17,6 @@ import Data.List (nub)
 instance Arbitrary Suit where
   arbitrary = elements [Manzu, Pinzu, Souzu, Honor]
 
--- instance Arbitrary Tile where
---   arbitrary = do
---     suit <- arbitrary
---     case suit of
---       Honor -> do
---         n <- choose (1,7)
---         return (Tile Honor n)
---       _ -> do
---         n <- choose (1,9)
---         return (Tile suit n)
-
 genTile :: Gen Tile
 genTile = do
   suit <- arbitrary

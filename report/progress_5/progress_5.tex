@@ -1,0 +1,205 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{listings}
+\usepackage{todonotes}
+
+\setuptodonotes{inline}
+\todostyle{done}{color=green!40}
+\todostyle{almostdone}{color=Goldenrod!70}
+
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,      % aktifkan warna
+  linkcolor=blue!70!black,       % warna untuk link internal (misal ke section)
+  citecolor=red,        % warna untuk citation
+  urlcolor=blue!70!black,        % warna untuk hyperlink / URL
+}
+
+\title{Mahjong Analyzer}
+\subtitle{Progress 5}
+\date{\today}
+\author{Muhammad Jilan Wicaksono}
+\institute{Universitas Indonesia}
+
+\lstset{
+  language=Haskell,            % Bahasa default
+  basicstyle=\ttfamily\footnotesize,  % Font dan ukuran
+  keywordstyle=\color{blue!70!black},       
+  commentstyle=\color{gray!70!black},       
+  stringstyle=\color{orange!70!black},      
+  numbers=left,                % Tampilkan nomor baris di kiri
+  numberstyle=\tiny\color{gray}, % Style nomor baris
+  breaklines=true,             % Otomatis pindah baris jika terlalu panjang
+  frame=single,                % Beri bingkai
+}
+
+\begin{document}
+\maketitle
+
+% \section{Target dan Pencapaian}
+\begin{frame}[fragile,allowframebreaks]{Target dan Pencapaian}
+    \todo[almostdone]{\textbf{Membuat Suite Test menggunakan QuickCheck:} \hfill 70\%}
+    \begin{itemize}
+      \item Membuat generator dari QuickCheck untuk Data Type Tile.
+      \item Membuat generator untuk Data Type AgariHand dan Meld berdasarkan genTile.
+      \item Membuat daftar properti yang secara matematis pasti terpenuhi oleh fungsi-fungsi yang sudah dibuat.
+    \end{itemize}
+    \todo[almostdone]{\textbf{Menulis README:} \hfill 30\%}
+    \begin{itemize}
+      \item Berisi penjelasan singkat algoritma dari penghitung shanten dan cara kerja memoTree.
+    \end{itemize}
+
+    \framebreak
+    \begin{columns}
+      \begin{column}{.5\linewidth}
+        
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/testGenTile.png}
+        \end{center}
+    
+      \end{column}
+      \begin{column}{.5\linewidth}
+        
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/testGenMeld.png}
+        \end{center}
+      \end{column}
+    \end{columns}
+
+    \framebreak
+
+    \begin{center}
+      \includegraphics[width = .75\linewidth]{images/testGenAgariHand.png}
+    \end{center}
+
+    \framebreak
+    \begin{columns}
+  
+      \begin{column}{.5\linewidth}
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/propFindPartition.png}
+        \end{center}
+      \end{column}
+
+      \begin{column}{.5\linewidth}
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/propFu.png}
+        \end{center}
+      \end{column}
+    \end{columns}
+
+    \framebreak
+
+    \begin{center}
+      \includegraphics[width = .75\linewidth]{images/propInvariant.png}
+    \end{center}
+    \framebreak
+
+    \begin{center}
+      \includegraphics[width = \linewidth]{images/testRes.png}
+    \end{center}
+    
+\end{frame}
+
+% \section{Link Commit}
+\begin{frame}{Link Commit}
+  \href{https://github.com/WLan1707/mahjong-analyzer/commit/7de788b591968764c895ec04c64a1afe44b4b6be}{Link Commit}
+    \begin{itemize}
+        \item \href{https://github.com/WLan1707/mahjong-analyzer/commit/7de788b591968764c895ec04c64a1afe44b4b6be}{https://github.com/WLan1707/mahjong-analyzer/commit/7de788b591968764c895ec04c64a1afe44b4b6be}
+    \end{itemize}
+\end{frame}
+
+% \section{Lesson Learned}
+\begin{frame}[fragile, allowframebreaks]{Lesson Learned: Memoization Using Tree}
+  Secara konsep mirip seperti Fibonacci, jadi akan digunakan contoh ini saja:
+  \[F(0) = 1, F(1) = 1, F(n) = F(n-1) + F(n-2)\]
+  Tanpa memoization, dapat memanggil
+
+  \lstinline|fix fib 30 == 1346269|
+
+  \begin{center}
+    \includegraphics[width = .7\linewidth]{images/no_memo.png}
+  \end{center}
+
+  \framebreak
+
+  Dengan list, dapat dipanggil 
+  
+  \lstinline|faster_f 3000 == 9001823511092631249|
+  \begin{center}
+    \includegraphics[width = .5\linewidth]{images/memoList.png}
+  \end{center}
+  Jika diperhatikan, \lstinline|faster_f| memanfaatkan \lstinline|fmap| dari Functor List dengan fungsi lookup \lstinline|(!!)| sebesar \(O(n)\).
+
+  dapat dimanfaatkan Functor lain dengan fungsi lookup sebesar \(O(\log n)\), yaitu tree.
+
+  \framebreak
+  \begin{columns}[T, onlytextwidth]
+    \begin{column}{.5\textwidth}
+      \begin{center}
+        \includegraphics[width = .7\linewidth]{images/treeVisualization.png}
+      \end{center}
+    \end{column}
+    \begin{column}{.5\textwidth}
+      \includegraphics[width = .7\linewidth]{images/memoTree.png}.
+    \end{column}
+  \end{columns}
+  \lstinline|f_tree| dibuat dulu secara lazy, ketika \lstinline|fastest_f n| dipanggil, hanya perlu melihat node ke \((n - 1)\) dan \((n - 2)\) dari \lstinline|f_tree| menggunakan index, dan keduanya juga hanya melihat kode sebelumnya saja juga, dan seterusnya. 
+
+  \framebreak
+
+  Dengan ini, dapat dipanggil bilangan fibonacci ke \(70000\) secara cepat.
+  \begin{center}
+    \includegraphics[width = \linewidth]{images/fastest_f 70000.png}
+  \end{center}
+  \framebreak
+
+  Penerapan pada perhitungan shanten
+  \begin{center}
+    \includegraphics[width = \linewidth]{images/shantenHC.png}
+  \end{center}
+
+  \framebreak
+
+  \begin{center}
+    \includegraphics[width = .8\linewidth]{images/shantenInt.png}
+  \end{center}
+
+  \begin{center}
+    \includegraphics[width = .5\linewidth]{images/memoShanten.png}
+  \end{center}
+
+\end{frame}
+
+\begin{frame}[fragile, allowframebreaks]{Lesson Learned: QuickCheck}
+  Haskell sudah mempunyai cara untuk membangun domain dari suatu fungsi secara otomatis, yang bisa digunakan untuk melakukan pengecekan suatu sifat dari fungsi itu.
+
+  Meskipun secara otomatis, perlu diberikan argumen agar domain tersebut membuat fungsi itu terdefinisi dengan baik di sana.
+
+  Pengecekannya juga hanya berupa sifat, yang harus bisa dibuktikan secara matematis (atau dari aturannya) tanpa program.
+
+  Sehingga harus berhati-hati dalam pendefinisian domain dan sifat yang ingin diperiksa.
+
+  \framebreak
+
+  Kelas Arbitrary juga memiliki tipe Gen, yang merupakan monad dan pastinya aplikatif, sehingga ada dua cara penulisan generator:
+  
+  \begin{enumerate}
+    \item do-notation jika generator bergantung antara variable
+
+    \begin{center}
+      \includegraphics[width = .6\linewidth]{images/genSeq.png}
+    \end{center}
+
+    \item Applicative untuk generator yang independen
+    
+    \begin{center}
+      \includegraphics[width = \linewidth]{images/genStd.png}
+    \end{center}
+  \end{enumerate}
+  Ini membuat kode generator lebih ekspresif, serta jangan paksakan penggunaan suatu notasi jika ada yang lebih bagus.
+\end{frame}
+\end{document}

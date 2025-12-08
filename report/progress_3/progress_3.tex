@@ -1,0 +1,95 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{listings}
+\usepackage{todonotes}
+
+\setuptodonotes{inline}
+\todostyle{done}{color=green!40}
+\todostyle{almostdone}{color=Goldenrod!70}
+
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,      % aktifkan warna
+  linkcolor=blue!70!black,       % warna untuk link internal (misal ke section)
+  citecolor=red,        % warna untuk citation
+  urlcolor=blue!70!black,        % warna untuk hyperlink / URL
+}
+
+\title{Mahjong Analyzer}
+\subtitle{Progress 3}
+\date{\today}
+\author{Muhammad Jilan Wicaksono}
+\institute{Universitas Indonesia}
+
+\lstset{
+  language=Haskell,            % Bahasa default
+  basicstyle=\ttfamily\footnotesize,  % Font dan ukuran
+  keywordstyle=\color{blue!70!black},       
+  commentstyle=\color{gray!70!black},       
+  stringstyle=\color{orange!70!black},      
+  numbers=left,                % Tampilkan nomor baris di kiri
+  numberstyle=\tiny\color{gray}, % Style nomor baris
+  breaklines=true,             % Otomatis pindah baris jika terlalu panjang
+  frame=single,                % Beri bingkai
+}
+
+\begin{document}
+\maketitle
+
+% \section{Target dan Pencapaian}
+\begin{frame}{Target dan Pencapaian}
+    \todo[done]{\textbf{Mengimplementasikan fungsi penghitung shanten:} \hfill 100\%}
+    \begin{itemize}
+      \item Mengidentifikasi apakah suatu tile merupakan bagian dari meld, pair, ataupun pmeld.
+      \item Dapat menghitung meskipun ada meld yang sudah terbuka.
+      \item Dapat menghitung untuk hand yang tidak standar.
+      \item Optimisasi menggunakan memoization.
+    \end{itemize}
+\end{frame}
+
+% \section{Link Commit}
+\begin{frame}{Link Commit}
+    \begin{itemize}
+        \item \href{https://github.com/WLan1707/mahjong-analyzer/commit/e691aec4f02b99c42f568873b3faacf42b7e9a44}{https://github.com/WLan1707/mahjong-analyzer/commit/e691aec4f02b99c42f568873b3faacf42b7e9a44}
+        \item \href{https://github.com/WLan1707/mahjong-analyzer/commit/9754714ae62ab10469f3a9ef9a12bba3aafe9848}{https://github.com/WLan1707/mahjong-analyzer/commit/9754714ae62ab10469f3a9ef9a12bba3aafe9848}
+    \end{itemize}
+\end{frame}
+
+% \section{Lesson Learned}
+\begin{frame}[fragile, allowframebreaks]{Lesson Learned: Lazy Evaluation \& Memoization}
+  \begin{columns}[T, onlytextwidth]
+    \begin{column}{.5\textwidth}
+      \begin{itemize}
+        \item Kelompokkan Hand berdasarkan suit, lalu ubah menjadi bilangan asli.
+      \end{itemize}
+    \end{column}
+    
+    \begin{column}{.5\textwidth}
+      \includegraphics[width = \linewidth]{images/extractSuit.png}
+    \end{column}
+  \end{columns}
+  Perhitungan shanten kini dilakukan per suit, dan hasil per-suit dapat dimemoisasi menggunakan struktur lazy agar evaluasi setiap state hanya terjadi sekali.
+
+  \framebreak
+
+  Masalah: jika menggunakan list, indexing dilakukan secara linier.
+  \begin{columns}[T, onlytextwidth]
+    \begin{column}{.5\textwidth}
+      \begin{itemize}
+        \item Buat infinite tree bilangan asli
+        \item Karena fungsi bertipe \lstinline|Int -> Int|, gunakan functor dari tree untuk mengubah fungsi shanten menjadi infinite tree juga, dengan node ke \(i \) bernilai \lstinline|shanten i|.
+        \item Karena disimpan dalam tree, mencari node \(n \) cukup dalam waktu \(O(\log n)\).
+      \end{itemize}
+    \end{column}
+    \begin{column}{.4\textwidth}
+      \includegraphics[width = \linewidth]{images/tree.png}
+
+      \includegraphics[width = \linewidth]{images/memoTree.png}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+\end{document}

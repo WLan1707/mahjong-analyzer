@@ -19,10 +19,13 @@ data Tile = Tile {
     deriving (Eq)
 
 instance Show Tile where
-    show (Tile Manzu n) = show n ++ "M"
-    show (Tile Pinzu n) = show n ++ "P"
-    show (Tile Souzu n) = show n ++ "S"
-    show (Tile Honor n) = show n ++ "Z"
+    show (Tile m n) = 
+        let s = case m of
+                Manzu -> "m"
+                Pinzu -> "p"
+                Souzu -> "s"
+                Honor -> "z"
+        in show n ++ s
 
 instance Ord Tile where
     compare :: Tile -> Tile -> Ordering

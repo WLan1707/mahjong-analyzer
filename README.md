@@ -25,13 +25,26 @@ Projek dikerjakan menggunakan [Cabal](https://www.haskell.org/cabal/) yang juga 
 cabal build
 ```
 
-### Jalankan Interaktif CLI
-Akan diimplementasikan
-
 ### Jalankan Test Suite
 ```bash
 cabal test
 ```
+
+## Aspek Functional Programming
+Penjelasan lebih rinci dapat dilihat di [Lesson Learn](./report/LESSONLEARN.md)
+
+### 1. Representasi tipe yang terstruktur
+
+Pemisahan `Pair`, `Meld`, dan `PartialMeld` menunjukkan bagaimana FP memanfaatkan tipe data sebagai alat untuk mengekspresikan aturan domain. Dengan tipe yang tepat, banyak kesalahan logika dapat dieliminasi sebelum program berjalan.
+
+### 2. Rekursi terkontrol melalui MemoTree
+
+Perhitungan shanten dan enumerasi block dieksekusi sebagai fungsi murni yang direkursikan. Penggunaan struktur memo berbasis pohon memungkinkan caching deterministik tanpa state global, mencerminkan gaya FP dalam mengatasi komputasi berat secara deklaratif.
+
+### 3. Property-based testing dengan QuickCheck
+
+QuickCheck memperkuat kualitas algoritma melalui pengujian berbasis properti. Pendekatan generator monadik Gen memungkinkan pembentukan data valid yang mengikuti aturan mahjong, selaras dengan paradigma FP di mana pembuktian dan verifikasi perilaku dilakukan melalui kombinasi komposisi fungsi dan model data yang ketat.
+
 
 ## Menghitung Shanten Menggunakan Memoization dengan Tree
 

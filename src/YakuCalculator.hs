@@ -16,13 +16,13 @@ isMenzen = null . openMelds
 
 isOpenKMeld (KMeld _ b) = b
 
-isSequenceMeld :: KMeld -> Bool
-isSequenceMeld (KMeld (Sequence _) _) = True
+isSequenceMeld :: Meld -> Bool
+isSequenceMeld (Sequence _) = True
 isSequenceMeld _ = False
 
-isTripletMeld :: KMeld -> Bool
-isTripletMeld (KMeld (Triplet _) _) = True
-isTripletMeld _ = False
+isTripletKMeld :: KMeld -> Bool
+isTripletKMeld (KMeld (Triplet _) _) = True
+isTripletKMeld _ = False
 
 isSimpleTile :: Tile -> Bool
 isSimpleTile (Tile Honor _) = False
@@ -60,11 +60,11 @@ menzenchin ctx _ = fromEnum $ isMenzen ctx && (winMethod ctx == Tsumo)
 riichi ctx _ = fromEnum $ isRiichi ctx
 
 pinfu :: HandContext -> AgariHand -> Int
-pinfu ctx (Standard kmelds pair)
+pinfu ctx aHand@(Standard kmelds pair)
     | not (isMenzen ctx)          = 0
-    | (not . all isSequenceMeld) kmelds = 0
+    | (not . all ( isSequenceMeld . baseMeld )) kmelds = 0
     | pairIsYakuhai pair ctx         = 0
-    | not (isRyanmenWait ctx kmelds pair) = 0
+    | not (isRyanmenWait ctx aHand) = 0
     | otherwise                      = 1
 pinfu _ _ = 0
 
@@ -75,51 +75,37 @@ pairIsYakuhai (Pair (Tile Honor n)) ctx =
     || n >= 5   -- dragons
 pairIsYakuhai _ _ = False
 
-isRyanmenWait :: HandContext -> [KMeld] -> Pair -> Bool
-isRyanmenWait ctx kmelds pair =
-    case findSequenceContainingWinTile kmelds (winTile ctx) of
-        Just (Sequence (Tile s n)) ->
-            let w = winTile ctx in
-            case w of
-                Tile _ wN
-                    -- (wN == n+2) berarti n,n+1,wN → menang kanan
-                    -- (wN == n)   berarti wN,n+1,n+2 → menang kiri
-                    | wN == n     -> True
-                    | wN == n + 2 -> True
-                    | otherwise   -> False
-        Nothing -> False
-
-findSequenceContainingWinTile :: [KMeld] -> Tile -> Maybe Meld
-findSequenceContainingWinTile kmelds wt =
-    case [ m | KMeld m@(Sequence t) _ <- kmelds, tileInSequence wt t ] of
-        (m:_) -> Just m
-        []    -> Nothing
-
-tileInSequence :: Tile -> Tile -> Bool
-tileInSequence (Tile s n) (Tile s2 n2)
-    = s == s2 && n >= n2 && n <= n2 + 2
-
+isRyanmenWait ctx (Standard kmelds _) 
+    | s == Honor   = False
+    | otherwise     = (KMeld (Sequence wt) False `elem` kmelds && n /= 7) || (KMeld (Sequence (Tile s (n-2))) False `elem` kmelds && n /= 3)
+    where
+        wt = winTile ctx
+        s = suitTile wt
+        n = numberTile wt
+isRyanmenWait _ _ = False
 
 -- pure double sequence
-iipeikou ctx (Standard kmelds pair) 
-    | not $ isMenzen ctx = 0
-    | length ( filter (\m -> isSequenceMeld m && freq m == 2)  (nub kmelds)) == 1 = 1
-    | otherwise = 0
-        where freq y = length $ filter (== y) kmelds
-iipeikou _ _ = 0 -- Masih salah masalah persamaan KMeld yang ada isOpen nya, ryanpeikou juga.
+iipeikou ctx (Standard kmelds pair)
+    | not (isMenzen ctx) = 0
+    | otherwise =
+        let seqs = filter isSequenceMeld (map baseMeld kmelds)
+            dup  = [ s | s <- nub seqs, count s seqs == 2 ]
+        in if length dup == 1 then 1 else 0
+  where
+    count x xs = length (filter (== x) xs)
+
+iipeikou _ _ = 0
+
 
 -- 1 Han
 
 -- all simple
 tanyao :: HandContext -> AgariHand -> Int
 tanyao _ (Standard kmelds pair)
-    | all isSimpleTile pairTiles
+    | isSimplePair pair
       && all (allMeldSimple . baseMeld) kmelds
         = 1
     | otherwise = 0
-  where
-    pairTiles = case pair of
-        Pair t -> [t, t]
 
 tanyao _ _ = 0
 
@@ -187,7 +173,7 @@ ittsu ctx (Standard kmelds _) =
 ittsu _ _ = 0
 
 -- all triplet
-toitoi _ (Standard kmelds _) = 2 * fromEnum (all isTripletMeld kmelds)
+toitoi _ (Standard kmelds _) = 2 * fromEnum (all isTripletKMeld kmelds)
 toitoi _ _ = 0
 
 -- seven pairs
@@ -195,7 +181,7 @@ chiitoitsu _ (Chiitoi pairs) = 2
 chiitoitsu _ _ = 0
 
 -- all terminal or honor
-honroutou _ (Standard kmelds pair) = 2 * fromEnum (not (any (allMeldSimple . baseMeld) kmelds) && not ( isSimplePair pair ) && all isTripletMeld kmelds)
+honroutou _ (Standard kmelds pair) = 2 * fromEnum (not (any (allMeldSimple . baseMeld) kmelds) && not ( isSimplePair pair ) && all isTripletKMeld kmelds)
 honroutou _ (Chiitoi pairs) = 2 * fromEnum (not (any isSimplePair pairs))
 honroutou _ _ = 0
 
@@ -232,12 +218,17 @@ honitsu ctx (Standard kmelds pair) =
 honitsu _ _ = 0
 
 -- twice pure double sequence
-ryanpeikou ctx (Standard kmelds pair) 
-    | not $ isMenzen ctx = 0
-    | length ( filter (\m -> isSequenceMeld m && freq m == 2)  (nub kmelds)) == 2 = 3
-    | otherwise = 0
-        where freq y = length $ filter (== y) kmelds
+ryanpeikou ctx (Standard kmelds pair)
+    | not (isMenzen ctx) = 0
+    | otherwise =
+        let seqs = filter isSequenceMeld (map baseMeld kmelds)
+            dup  = [ s | s <- nub seqs, count s seqs == 2 ]
+        in if length dup == 2 then 2 else 0
+  where
+    count x xs = length (filter (== x) xs)
+
 ryanpeikou _ _ = 0
+
 
 -- 6 han
 

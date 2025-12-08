@@ -85,11 +85,23 @@ runTest str ctx =
       Left err   -> putStrLn ("Error: " ++ err)
       Right pts  -> putStrLn ("Score = " ++ show pts)
 
-
-
 tes1 = runTest "111234m456p789s55z" (ctxRon (Tile Manzu 3))
 -- expected: Score = 1300
 tes2 = runTest "111222m333s444z55p" (ctxRon (Tile Souzu 3))
 -- expected: Score = 8000
 tes3 = runTest "112233m4455p66s77z" (ctxRon (Tile Honor 7))
 -- expected: 1600
+
+debugFuHan :: HandContext -> AgariHand -> IO ()
+debugFuHan ctx ag = do
+    putStrLn ("Fu = "  ++ show (calcFu ctx ag))
+    putStrLn ("Han = " ++ show (calcHan ctx ag))
+
+tes2debug =
+  case parseHand "111222m333s444z55p" of
+    Left e -> putStrLn e
+    Right hand ->
+      let hc = handToCount hand
+          ctx = ctxRon (Tile Manzu 3)
+          ags = findPartition hc (openMelds ctx)
+      in mapM_ (debugFuHan ctx) ags

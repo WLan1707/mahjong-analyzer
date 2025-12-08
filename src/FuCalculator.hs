@@ -37,14 +37,15 @@ tilesInMeld (Triplet tile) = [tile, tile, tile]
 isTankiWait ctx (Standard _ pair) = isInPair (winTile ctx) pair
 isTankiWait _ _ = False
 
-isRyanmenWait' ctx (Standard kmelds _) 
-    | s == Honor   = False
-    | otherwise     = (KMeld (Sequence wt) False `elem` kmelds && n /= 7) || (KMeld (Sequence (Tile s (n-2))) False `elem` kmelds && n /= 3)
-    where
-        wt = winTile ctx
-        s = suitTile wt
-        n = numberTile wt
-isRyanmenWait' _ _ = False
+-- isRyanmenWait ctx (Standard kmelds _) 
+--     | s == Honor   = False
+--     | otherwise     = (KMeld (Sequence wt) False `elem` kmelds && n /= 7) || (KMeld (Sequence (Tile s (n-2))) False `elem` kmelds && n /= 3)
+--     where
+--         wt = winTile ctx
+--         s = suitTile wt
+--         n = numberTile wt
+-- isRyanmenWait _ _ = False
+-- Ada di YakuCalculator.hs
 
 isPenchanWait ctx (Standard kmelds _) =
     (KMeld (Sequence wt) False `elem` kmelds && n == 7) || (KMeld (Sequence (Tile s (n - 2))) False `elem` kmelds && n == 3)
@@ -62,7 +63,7 @@ isKanchanWait ctx (Standard kmelds _) =
         n = numberTile wt
 isKanchanWait _ _ = False 
 
-isShanponWait ctx hand = not . or $ uncurry <$> [isTankiWait, isRyanmenWait', isPenchanWait, isKanchanWait] <*> [(ctx, hand)]
+isShanponWait ctx hand = not . or $ uncurry <$> [isTankiWait, isRyanmenWait, isPenchanWait, isKanchanWait] <*> [(ctx, hand)]
 
 waitFu ctx hand =
     2 * fromEnum ( or $ uncurry <$> [isTankiWait, isPenchanWait, isKanchanWait] <*> [(ctx, hand)])

@@ -1,0 +1,160 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{listings}
+\usepackage{todonotes}
+
+\setuptodonotes{inline}
+\todostyle{done}{color=green!40}
+\todostyle{almostdone}{color=Goldenrod!70}
+
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,      % aktifkan warna
+  linkcolor=blue!70!black,       % warna untuk link internal (misal ke section)
+  citecolor=red,        % warna untuk citation
+  urlcolor=blue!70!black,        % warna untuk hyperlink / URL
+}
+
+\title{Mahjong Analyzer}
+\subtitle{Progress 4}
+\date{\today}
+\author{Muhammad Jilan Wicaksono}
+\institute{Universitas Indonesia}
+
+\lstset{
+  language=Haskell,            % Bahasa default
+  basicstyle=\ttfamily\footnotesize,  % Font dan ukuran
+  keywordstyle=\color{blue!70!black},       
+  commentstyle=\color{gray!70!black},       
+  stringstyle=\color{orange!70!black},      
+  numbers=left,                % Tampilkan nomor baris di kiri
+  numberstyle=\tiny\color{gray}, % Style nomor baris
+  breaklines=true,             % Otomatis pindah baris jika terlalu panjang
+  frame=single,                % Beri bingkai
+}
+
+\begin{document}
+\maketitle
+
+% \section{Target dan Pencapaian}
+\begin{frame}[fragile,allowframebreaks]{Target dan Pencapaian}
+    \todo[almostdone]{\textbf{Membuat fungsi pencari partisi} \hfill 90\%}
+    \begin{itemize}
+      \item Memodifikasi fungsi validasi kemenangan menjadi pencari partisi yang bertipe bisa mengeluarkan semua partisi yang menang.
+      \item Belum sempat mengoptimasi lagi seperti fungsi shanten.
+    \end{itemize}
+    \todo[almostdone]{\textbf{Mengimplementasikan fungsi untuk mengecek yaku:} \hfill 70\%}
+    \begin{itemize}
+      \item Mengimplementasikan fungsi yang menerima partisi dan mengeluarkan list semua yaku yang terpenuhi.
+      \item Baru mengimplementasikan \(17 \) dari sekitar \(26 \) pola yaku yang ada. Kebanyakan adalah pola edge case yang langka.
+    \end{itemize}
+
+    \framebreak
+    \todo[almostdone]{\textbf{Membuat fungsi untuk menghitung skor:} \hfill 80\%}
+    \begin{itemize}
+      \item Mengimplementasikan fungsi yang menerima partisi dan mengeluarkan nilai Fu dari tangan, yaitu skor minor.
+      \item Menghitung total skor yang diperoleh berdasarkan pola yang dibuat dan nilai dari Fu, serta informasi eksternal seperti apakah menjadi dealer.
+    \end{itemize}
+
+    \framebreak
+    Yaku Triple Mixed Sequence: Memuat 3 sequence dengan nilai sama tapi menggunakan 3 suit berbeda
+    \begin{columns}
+      \begin{column}{.5\linewidth}
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/mixedTripleSequenceEx.png}
+        \end{center}
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/mixedTripleSequenceRes.png}
+        \end{center}
+      \end{column}
+      \begin{column}{.5\linewidth}
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/mixedTripleSequenceCode.png}
+        \end{center}
+      \end{column}
+    \end{columns}
+
+    \framebreak
+    Yaku Pure Straight: Memuat sequence (1,2,3), (4,5,6), (7,8,9) dengan suit yang sama.
+    \begin{columns}
+      \begin{column}{.5\linewidth}
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/pureStraightEx.png}
+        \end{center}
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/pureStraightRes.png}
+        \end{center}
+      \end{column}
+      \begin{column}{.5\linewidth}
+        \begin{center}
+          \includegraphics[width = \linewidth]{images/pureStraightCode.png}
+        \end{center}
+      \end{column}
+    \end{columns}
+    
+\end{frame}
+
+% \section{Link Commit}
+\begin{frame}{Link Commit}
+  \href{https://github.com/WLan1707/mahjong-analyzer/commit/e948dcd73627e5b8a2a4945314042c5f6dc07741}{Link Commit}
+    \begin{itemize}
+        \item \href{https://github.com/WLan1707/mahjong-analyzer/commit/e948dcd73627e5b8a2a4945314042c5f6dc07741}{https://github.com/WLan1707/mahjong-analyzer/commit/e948dcd73627e5b8a2a4945314042c5f6dc07741}
+    \end{itemize}
+\end{frame}
+
+% \section{Lesson Learned}
+\begin{frame}[fragile, allowframebreaks]{Lesson Learned: Memoization Using Tree}
+  Secara konsep mirip seperti Fibonacci, jadi akan digunakan contoh ini saja:
+  \[F(0) = 1, F(1) = 1, F(n) = F(n-1) + F(n-2)\]
+  Tanpa memoization, dapat memanggil
+
+  \lstinline|fix fib 30 == 1346269|
+
+  \begin{center}
+    \includegraphics[width = .7\linewidth]{images/no_memo.png}
+  \end{center}
+
+  \framebreak
+
+  Dengan list, dapat dipanggil 
+  
+  \lstinline|faster_f 3000 == 9001823511092631249|
+  \begin{center}
+    \includegraphics[width = .6\linewidth]{images/memoList.png}
+  \end{center}
+  Seperti yang dipelajari di kelas
+
+  \lstinline|fib' = 1 : 1 : zipWith (+) fib' (tail fib')|
+
+  Jika diperhatikan, \lstinline|faster_f| memanfaatkan \lstinline|fmap| dari Functor List dengan fungsi lookup \lstinline|(!!)| sebesar \(O(n)\).
+
+  \framebreak
+  \begin{columns}[T, onlytextwidth]
+    \begin{column}{.5\textwidth}
+      \begin{center}
+        \includegraphics[width = .7\linewidth]{images/treeVisualization.png}
+      \end{center}
+    \end{column}
+    \begin{column}{.5\textwidth}
+      \includegraphics[width = .7\linewidth]{images/memoTree.png}.
+    \end{column}
+  \end{columns}
+  \lstinline|f_tree| dibuat dulu secara lazy, ketika \lstinline|fastest_f n| dipanggil, hanya perlu melihat node ke \((n - 1)\) dan \((n - 2)\) dari \lstinline|f_tree| menggunakan index, dan keduanya juga hanya melihat kode sebelumnya saja juga, dan seterusnya.
+
+  \framebreak
+
+  Dengan ini, dapat dipanggil bilangan fibonacci ke \(70000\) secara cepat.
+  \begin{center}
+    \includegraphics[width = \linewidth]{images/fastest_f 70000.png}
+  \end{center}
+  \framebreak
+
+\end{frame}
+
+% \begin{frame}[fragile, allowframebreaks]{Lesson Learned: Kompleksitas Tipe Data}
+  
+% \end{frame}
+\end{document}
