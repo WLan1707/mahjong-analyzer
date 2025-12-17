@@ -7,7 +7,7 @@ module Generators where
 import Test.QuickCheck
 import Hand
 -- import AgariCheck
-import Data.List (nub)
+-- import Data.List 
 -- import Data.Map.Strict (toList)
 
 ------------------------------------------------------------
@@ -58,13 +58,22 @@ instance Arbitrary Pair where
 -- AgariHand
 ------------------------------------------------------------
 
+allTiles :: [Tile]
+allTiles =
+  [ Tile s n
+  | s <- [Manzu, Pinzu, Souzu, Honor]
+  , n <- case s of
+      Honor -> [1..7]
+      _     -> [1..9]
+  ]
+
 genStandard :: Gen AgariHand
 genStandard = Standard <$> vectorOf 4 arbitrary <*> arbitrary
 
 genChiitoi :: Gen AgariHand
 genChiitoi = do
-  ts <- nub <$> vectorOf 7 arbitrary
-  return (Chiitoi (map Pair ts))
+  ts <- sublistOf allTiles `suchThat` ((== 7) . length)
+  return (Chiitoi (map Pair ts))  
 
 genKokushi :: Gen AgariHand
 genKokushi = do
@@ -114,11 +123,11 @@ instance Arbitrary HandContext where
 -- Convert AgariHand → Hand
 ------------------------------------------------------------
 
-agariToHand :: AgariHand -> Hand
-agariToHand (Chiitoi ps) = concatMap (\(Pair t) -> [t,t]) ps
-agariToHand (Kokushi ts) = ts
-agariToHand (Standard km pair) =
-  concatMap kmeldToTiles km ++ pairToTiles pair
+agariToHand :: AgariHand -> (Hand, [KMeld])
+agariToHand (Chiitoi ps) = (concatMap (\(Pair t) -> [t,t]) ps, [])
+agariToHand (Kokushi ts) = (ts, [])
+agariToHand (Standard kms pair) =
+  (concatMap kmeldToTiles ( filter (not.isOpen) kms ) ++ pairToTiles pair, filter isOpen kms)
 
 kmeldToTiles :: KMeld -> [Tile]
 kmeldToTiles (KMeld m _) = meldToTiles m

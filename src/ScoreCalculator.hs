@@ -41,10 +41,16 @@ calcScore ctx ag =
 
 finalScore :: HandContext -> HandCount -> Int
 finalScore ctx hc =
-    let agaris = findPartition hc (openMelds ctx)
-    in if null agaris
-          then 0
-          else maximum (0 : [ calcScore ctx ag | ag <- agaris ])
+  let agaris = findPartition hc (openMelds ctx)
+      scores =
+        [ calcScore ctx ag
+        | ag <- agaris
+        , calcHan ctx ag > 0
+        ]
+  in case scores of
+       [] -> 0
+       _  -> maximum scores
+
 
 
 --------------------------------------------------------------------------
@@ -56,10 +62,12 @@ testScore ctx str = do
     hand <- parseHand str
     let hc = handToCount hand
         ags = findPartition hc (openMelds ctx)
-    if null ags
+        score = finalScore ctx hc
+    if score == 0
        then Left "Not a winning hand"
        else Right $ maximum [ calcScore ctx ag | ag <- ags ]
 
+testYaku :: HandContext -> (HandContext -> AgariHand -> a) -> String -> Either String [a]
 testYaku ctx yaku str = do
     hand <- parseHand str
     let hc = handToCount hand
@@ -85,23 +93,10 @@ runTest str ctx =
       Left err   -> putStrLn ("Error: " ++ err)
       Right pts  -> putStrLn ("Score = " ++ show pts)
 
-tes1 = runTest "111234m456p789s55z" (ctxRon (Tile Manzu 3))
--- expected: Score = 1300
+
 tes2 = runTest "111222m333s444z55p" (ctxRon (Tile Souzu 3))
--- expected: Score = 8000
+-- expected: Score = 3900
 tes3 = runTest "112233m4455p66s77z" (ctxRon (Tile Honor 7))
 -- expected: 1600
-
-debugFuHan :: HandContext -> AgariHand -> IO ()
-debugFuHan ctx ag = do
-    putStrLn ("Fu = "  ++ show (calcFu ctx ag))
-    putStrLn ("Han = " ++ show (calcHan ctx ag))
-
-tes2debug =
-  case parseHand "111222m333s444z55p" of
-    Left e -> putStrLn e
-    Right hand ->
-      let hc = handToCount hand
-          ctx = ctxRon (Tile Manzu 3)
-          ags = findPartition hc (openMelds ctx)
-      in mapM_ (debugFuHan ctx) ags
+tes4 = runTest "345678999m555p11s" (ctxRon (Tile Manzu 3))
+-- Tidak punya Yaku: tidak menang

@@ -177,7 +177,6 @@ memoShanten hand
 
 QuickCheck adalah library Haskell untuk *property-based testing*. Alih-alih menulis test case satu per satu, developer mendefinisikan *property* (kondisi yang harus selalu benar), lalu QuickCheck menghasilkan banyak data acak untuk menguji property tersebut. Jika ada satu contoh yang membuat property gagal, QuickCheck akan menampilkan *counterexample*.
 
-
 Generator QuickCheck dibangun menggunakan monad `Gen`, yaitu representasi fungsi yang menerima sumber angka acak serta parameter ukuran, lalu menghasilkan nilai secara deterministik. Dengan sifat monadik, generator dapat disusun secara bertahap: setiap langkah pembangkitan data dapat bergantung pada hasil langkah sebelumnya tanpa kehilangan purity.
 
 Secara konseptual, instance monad untuk `Gen` dapat digambarkan sebagai berikut:

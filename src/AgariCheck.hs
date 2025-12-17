@@ -154,7 +154,7 @@ agariTest = [agariCheckFromString hand | hand <- [hand1,kokushiHand]] where
         let result = isAgari $ handToCount  hand
         return result
 
-partitionTest = [findPartitionFromString hand | hand <- [hand6]] where
+partitionTest = [findPartitionFromString hand | hand <- [hand1, hand2, hand3, hand4, hand5, hand6]] where
     findPartitionFromString s = do
         hand <- parseHand s
         let result = findPartition (handToCount hand) []

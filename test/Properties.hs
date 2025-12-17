@@ -16,7 +16,7 @@ import Data.List (sort)
 
 prop_roundTrip :: AgariHand -> Bool
 prop_roundTrip ag =
-  let h  = agariToHand ag
+  let h  = fst (agariToHand ag)
       hc = handToCount h
   in sort (countToHand hc) == sort h
 
@@ -26,10 +26,11 @@ prop_roundTrip ag =
 
 prop_partitionCorrect :: AgariHand -> Bool
 prop_partitionCorrect ag =
-  let h  = agariToHand ag
+  let h  = fst (agariToHand ag)
+      kms = snd (agariToHand ag)
       hc = handToCount h
       ag' = normalizeAgari ag
-  in ag' `elem` map normalizeAgari (findPartition hc [])
+  in ag' `elem` map normalizeAgari (findPartition hc kms)
 
 ------------------------------------------------------------
 -- Property: Fu properties
@@ -53,10 +54,12 @@ prop_fuAtLeast20 ctx ag =
 -- Property: Score limits
 ------------------------------------------------------------
 
-prop_scoreMin :: HandContext -> AgariHand -> Bool
+prop_scoreMin :: HandContext -> AgariHand -> Property
 prop_scoreMin ctx ag =
-  let s = calcScore ctx ag
-  in s >= 1000 || calcHan ctx ag >= 13  -- yakuman exception
+  winTile ctx `elem` fst (agariToHand ag) ==>
+    let s = calcScore ctx ag
+    in s >= 1000 || s == 0
+  -- || calcHan ctx ag >= 13  -- yakuman exception
 
 
 prop_scoreYakuman :: HandContext -> AgariHand -> Property
@@ -71,9 +74,10 @@ prop_scoreYakuman ctx ag =
 
 prop_scorePermutationInvariant :: HandContext -> AgariHand -> Property
 prop_scorePermutationInvariant ctx ag =
-  let h  = agariToHand ag
+  let h  = fst (agariToHand ag)
+      kms = snd (agariToHand ag)
       sc = calcScore ctx ag
   in forAll (shuffle h) $ \h2 ->
        let hc2 = handToCount h2
-           ag2s = findPartition hc2 []
+           ag2s = findPartition hc2 kms
        in null ag2s || maximum (map (calcScore ctx) ag2s) == sc

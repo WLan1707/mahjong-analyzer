@@ -153,12 +153,6 @@ normalizeAgari (Chiitoi pairs) = Chiitoi (sort pairs)
 
 -- Fungsi pembantu untuk mengubah Char menjadi Suit
 charToSuit :: Char -> Either String Suit
--- charToSuit 'm' = Right Manzu
--- charToSuit 'p' = Right Pinzu
--- charToSuit 's' = Right Souzu
--- charToSuit 'z' = Right Honor  -- 'z' untuk jīpai (honor)
--- charToSuit c   = Left ("Karakter suit tidak valid: " ++ [c])
-
 charToSuit char
     | char == 'm' = Right Manzu
     | char == 'p' = Right Pinzu
